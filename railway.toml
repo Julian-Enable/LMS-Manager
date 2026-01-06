@@ -1,0 +1,9 @@
+# Railway Deployment Configuration
+# Prevent Railway from running migrations during build
+
+[build]
+nixpacksVersion = "1.41.0"
+
+[build.env]
+# Skip automatic Django migrations
+NIXPACKS_NO_MIGRATE = "1"
