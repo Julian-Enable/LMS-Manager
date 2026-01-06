@@ -1,0 +1,139 @@
+{% extends 'core/base.html' %}
+
+{% block title %}Inicio - LMS + Knowledge Base{% endblock %}
+
+{% block content %}
+<!-- Hero Section con Buscador Destacado -->
+<div class="bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-2xl shadow-2xl p-12 mb-12 text-center">
+    <h1 class="text-5xl font-bold mb-4">
+        <i class="fas fa-lightbulb mr-3"></i>
+        Centro de Conocimiento
+    </h1>
+    <p class="text-xl text-blue-100 mb-8">
+        Encuentra el video exacto en el momento exacto. Busca por error, proceso o tema.
+    </p>
+    <form action="{% url 'core:search' %}" method="get" class="max-w-3xl mx-auto">
+        <div class="relative">
+            <input type="text" name="q" placeholder="¿Qué necesitas aprender hoy?"
+                class="w-full px-8 py-6 text-lg text-gray-800 rounded-xl focus:outline-none focus:ring-4 focus:ring-blue-300"
+                autofocus>
+            <button type="submit"
+                class="absolute right-2 top-2 bg-blue-600 text-white px-8 py-4 rounded-lg hover:bg-blue-700 transition text-lg font-semibold">
+                <i class="fas fa-search mr-2"></i> Buscar
+            </button>
+        </div>
+    </form>
+</div>
+
+<!-- Categorías -->
+<div class="mb-12">
+    <h2 class="text-3xl font-bold text-gray-800 mb-6 flex items-center">
+        <i class="fas fa-folder-open text-yellow-500 mr-3"></i>
+        Explora por Categoría
+    </h2>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {% for category in categories %}
+        <a href="{% url 'core:category_list' category.slug %}"
+            class="bg-white rounded-xl shadow-lg hover:shadow-2xl transition transform hover:-translate-y-2 p-6 border-l-4 border-blue-500 group">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-2xl font-bold text-gray-800 group-hover:text-blue-600 transition">
+                    {% if category.icon %}
+                    <i class="{{ category.icon }} mr-2"></i>
+                    {% else %}
+                    <i class="fas fa-folder mr-2"></i>
+                    {% endif %}
+                    {{ category.name }}
+                </h3>
+                <i class="fas fa-arrow-right text-gray-400 group-hover:text-blue-600 transition"></i>
+            </div>
+            <p class="text-gray-600">
+                {{ category.description|default:"Explora todos los temas de esta categoría"|truncatewords:15 }}
+            </p>
+            <div class="mt-4 text-sm text-gray-500">
+                <i class="fas fa-book mr-1"></i> {{ category.topics.count }} temas
+            </div>
+        </a>
+        {% empty %}
+        <div class="col-span-3 text-center py-12 text-gray-500">
+            <i class="fas fa-inbox text-6xl mb-4"></i>
+            <p>No hay categorías disponibles</p>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<!-- Temas Recientes -->
+<div>
+    <h2 class="text-3xl font-bold text-gray-800 mb-6 flex items-center">
+        <i class="fas fa-clock text-green-500 mr-3"></i>
+        Temas Recientes
+    </h2>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {% for topic in recent_topics %}
+        <a href="{% url 'core:topic_detail' topic.code %}"
+            class="bg-white rounded-xl shadow-lg hover:shadow-2xl transition transform hover:-translate-y-1 overflow-hidden group">
+
+            <!-- Thumbnail del video -->
+            <div
+                class="bg-gradient-to-r from-purple-500 to-pink-500 h-48 flex items-center justify-center relative overflow-hidden">
+                {% if topic.video.platform == 'youtube' %}
+                <img src="https://img.youtube.com/vi/{{ topic.video.external_id }}/mqdefault.jpg"
+                    alt="{{ topic.title }}"
+                    class="w-full h-full object-cover group-hover:scale-110 transition duration-300">
+                {% else %}
+                <i class="fas fa-play-circle text-white text-6xl"></i>
+                {% endif %}
+
+                <!-- Timestamp Badge -->
+                <div
+                    class="absolute bottom-3 right-3 bg-black bg-opacity-75 text-white px-3 py-1 rounded-lg text-sm font-bold">
+                    <i class="fas fa-clock mr-1"></i> {{ topic.get_formatted_timestamp }}
+                </div>
+            </div>
+
+            <div class="p-6">
+                <div class="text-sm text-gray-500 mb-2">
+                    <span class="bg-blue-100 text-blue-800 px-2 py-1 rounded font-semibold">{{ topic.code }}</span>
+                    <span class="ml-2 text-gray-400">|</span>
+                    <span class="ml-2">{{ topic.category.name }}</span>
+                </div>
+                <h3 class="text-xl font-bold text-gray-800 mb-2 group-hover:text-blue-600 transition">
+                    {{ topic.title }}
+                </h3>
+                <p class="text-gray-600 line-clamp-2">
+                    {{ topic.description|striptags|truncatewords:20|default:"Sin descripción disponible" }}
+                </p>
+
+                {% if topic.location_tag %}
+                <div class="mt-4 text-sm text-gray-500">
+                    <i class="fas fa-map-marker-alt mr-1"></i> {{ topic.get_location_tag_display }}
+                </div>
+                {% endif %}
+            </div>
+        </a>
+        {% empty %}
+        <div class="col-span-3 text-center py-12 text-gray-500">
+            <i class="fas fa-video-slash text-6xl mb-4"></i>
+            <p>No hay temas disponibles</p>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<!-- Call to Action -->
+<div class="mt-16 bg-gradient-to-r from-green-500 to-teal-500 text-white rounded-2xl shadow-2xl p-12 text-center">
+    <h2 class="text-4xl font-bold mb-4">
+        <i class="fas fa-graduation-cap mr-3"></i>
+        ¿Listo para comenzar?
+    </h2>
+    <p class="text-xl text-green-100 mb-8">
+        Accede a todo el contenido organizado secuencialmente en el Modo Curso
+    </p>
+    <a href="{% url 'core:course_mode' %}"
+        class="inline-block bg-white text-green-600 px-10 py-4 rounded-xl font-bold text-lg hover:bg-green-50 transition shadow-lg">
+        <i class="fas fa-book-open mr-2"></i> Ver Modo Curso
+    </a>
+</div>
+{% endblock %}

@@ -1,0 +1,133 @@
+{% extends 'core/base.html' %}
+
+{% block title %}Resultados: {{ query }}{% endblock %}
+
+{% block content %}
+<div class="max-w-5xl mx-auto">
+
+    <!-- Header de Búsqueda -->
+    <div class="bg-white rounded-xl shadow-lg p-8 mb-8">
+        <h1 class="text-3xl font-bold text-gray-800 mb-2">
+            <i class="fas fa-search text-blue-500 mr-2"></i>
+            Resultados de Búsqueda
+        </h1>
+        <p class="text-gray-600">
+            Búsqueda: <span class="font-bold text-blue-600">"{{ query }}"</span>
+            <span class="ml-4 text-gray-500">
+                ({{ total_results }} resultado{{ total_results|pluralize }})
+            </span>
+        </p>
+    </div>
+
+    <!-- Resultados -->
+    {% if results %}
+    <div class="space-y-4">
+        {% for topic in results %}
+        <a href="{% url 'core:topic_detail' topic.code %}"
+            class="block bg-white rounded-xl shadow-lg hover:shadow-2xl transition transform hover:-translate-y-1 p-6 border-l-4 border-blue-500 group">
+
+            <div class="flex items-start justify-between">
+                <div class="flex-1">
+                    <div class="flex items-center gap-3 mb-2">
+                        <span class="bg-blue-600 text-white px-3 py-1 rounded-lg font-bold text-sm">
+                            {{ topic.code }}
+                        </span>
+                        <span class="text-gray-500 text-sm">
+                            {{ topic.category.name }}
+                        </span>
+                    </div>
+
+                    <h2 class="text-2xl font-bold text-gray-800 group-hover:text-blue-600 transition mb-2">
+                        {{ topic.title }}
+                    </h2>
+
+                    <p class="text-gray-600 mb-3">
+                        <i class="fas fa-video text-purple-500 mr-1"></i>
+                        <strong>Video:</strong> {{ topic.video.title }}
+                        <span class="ml-4 text-green-600 font-semibold">
+                            <i class="fas fa-clock mr-1"></i>
+                            Empieza en {{ topic.get_formatted_timestamp }}
+                        </span>
+                    </p>
+
+                    {% if topic.description %}
+                    <p class="text-gray-600 line-clamp-2">
+                        {{ topic.description|striptags|truncatewords:30 }}
+                    </p>
+                    {% endif %}
+
+                    <!-- Tags -->
+                    {% if topic.tags.all %}
+                    <div class="mt-3 flex flex-wrap gap-2">
+                        {% for tag in topic.tags.all %}
+                        <span class="bg-gray-100 text-gray-700 px-2 py-1 rounded text-xs">
+                            #{{ tag.name }}
+                        </span>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                </div>
+
+                <div class="ml-6 text-gray-400 group-hover:text-blue-600 transition">
+                    <i class="fas fa-play-circle text-5xl"></i>
+                </div>
+            </div>
+        </a>
+        {% endfor %}
+    </div>
+
+    <!-- Paginación -->
+    {% if is_paginated %}
+    <div class="mt-8 flex justify-center">
+        <div class="flex gap-2">
+            {% if page_obj.has_previous %}
+            <a href="?q={{ query }}&page={{ page_obj.previous_page_number }}"
+                class="bg-white px-4 py-2 rounded-lg shadow hover:shadow-lg transition">
+                <i class="fas fa-chevron-left"></i> Anterior
+            </a>
+            {% endif %}
+
+            <span class="bg-blue-600 text-white px-4 py-2 rounded-lg shadow">
+                Página {{ page_obj.number }} de {{ page_obj.paginator.num_pages }}
+            </span>
+
+            {% if page_obj.has_next %}
+            <a href="?q={{ query }}&page={{ page_obj.next_page_number }}"
+                class="bg-white px-4 py-2 rounded-lg shadow hover:shadow-lg transition">
+                Siguiente <i class="fas fa-chevron-right"></i>
+            </a>
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
+
+    {% else %}
+    <!-- Sin Resultados -->
+    <div class="bg-white rounded-xl shadow-lg p-16 text-center">
+        <i class="fas fa-search-minus text-gray-300 text-8xl mb-6"></i>
+        <h2 class="text-3xl font-bold text-gray-800 mb-4">
+            No se encontraron resultados
+        </h2>
+        <p class="text-gray-600 mb-8">
+            No hay temas que coincidan con "{{ query }}". Intenta con otros términos.
+        </p>
+
+        <div class="max-w-md mx-auto">
+            <h3 class="font-bold text-gray-700 mb-3">Sugerencias:</h3>
+            <ul class="text-left text-gray-600 space-y-2">
+                <li><i class="fas fa-lightbulb text-yellow-500 mr-2"></i> Busca por código del tema (ej: "1.13")</li>
+                <li><i class="fas fa-lightbulb text-yellow-500 mr-2"></i> Usa palabras clave del proceso (ej:
+                    "Facturación")</li>
+                <li><i class="fas fa-lightbulb text-yellow-500 mr-2"></i> Busca por error específico (ej: "Error 505")
+                </li>
+            </ul>
+        </div>
+
+        <a href="{% url 'core:home' %}"
+            class="inline-block mt-8 bg-blue-600 text-white px-8 py-3 rounded-lg hover:bg-blue-700 transition">
+            <i class="fas fa-home mr-2"></i> Volver al Inicio
+        </a>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

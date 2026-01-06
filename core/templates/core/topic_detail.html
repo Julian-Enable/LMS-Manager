@@ -1,0 +1,240 @@
+{% extends 'core/base.html' %}
+
+{% block title %}{{ topic.code }} - {{ topic.title }}{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto">
+
+    <!-- Breadcrumb -->
+    <nav class="mb-6 text-sm text-gray-600">
+        <a href="{% url 'core:home' %}" class="hover:text-blue-600"><i class="fas fa-home"></i> Inicio</a>
+        <span class="mx-2">/</span>
+        <a href="{% url 'core:category_list' topic.category.slug %}" class="hover:text-blue-600">{{ topic.category.name
+            }}</a>
+        <span class="mx-2">/</span>
+        <span class="text-gray-800 font-semibold">{{ topic.code }}</span>
+    </nav>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+
+        <!-- Columna Principal: Video Player -->
+        <div class="lg:col-span-2">
+
+            <!-- Header del Topic -->
+            <div class="bg-white rounded-xl shadow-lg p-6 mb-6">
+                <div class="flex items-start justify-between mb-4">
+                    <div>
+                        <span class="inline-block bg-blue-600 text-white px-3 py-1 rounded-lg font-bold text-sm mb-2">
+                            {{ topic.code }}
+                        </span>
+                        <h1 class="text-4xl font-bold text-gray-800">
+                            {{ topic.title }}
+                        </h1>
+                    </div>
+                    <div class="text-sm text-gray-500">
+                        <i class="fas fa-folder mr-1"></i> {{ topic.category.name }}
+                    </div>
+                </div>
+
+                <!-- Metadata -->
+                <div class="flex flex-wrap gap-4 text-sm text-gray-600">
+                    <div>
+                        <i class="fas fa-video text-purple-500 mr-1"></i>
+                        <strong>Video:</strong> {{ topic.video.title }}
+                    </div>
+                    <div>
+                        <i class="fas fa-clock text-green-500 mr-1"></i>
+                        <strong>Inicia en:</strong> {{ topic.get_formatted_timestamp }}
+                    </div>
+                    {% if topic.location_tag %}
+                    <div>
+                        <i class="fas fa-map-marker-alt text-red-500 mr-1"></i>
+                        <strong>Ubicación:</strong> {{ topic.get_location_tag_display }}
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Reproductor Inteligente con Alpine.js -->
+            <div x-data="{ 
+                playerReady: false,
+                currentTime: 0
+            }" class="bg-black rounded-xl shadow-2xl overflow-hidden mb-6">
+
+                {% if topic.video.platform == 'youtube' %}
+                <!-- YouTube Player con Timestamp Automático -->
+                <div class="relative" style="padding-bottom: 56.25%;">
+                    <iframe id="youtube-player" class="absolute top-0 left-0 w-full h-full"
+                        src="{{ topic.get_embed_url_with_timestamp }}&autoplay=1&rel=0" frameborder="0"
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                        allowfullscreen></iframe>
+                </div>
+
+                {% elif topic.video.platform == 'vimeo' %}
+                <!-- Vimeo Player -->
+                <div class="relative" style="padding-bottom: 56.25%;">
+                    <iframe class="absolute top-0 left-0 w-full h-full" src="{{ topic.get_embed_url_with_timestamp }}"
+                        frameborder="0" allow="autoplay; fullscreen; picture-in-picture" allowfullscreen></iframe>
+                </div>
+
+                {% elif topic.video.platform == 'cloudflare' %}
+                <!-- Cloudflare Stream -->
+                <div class="relative" style="padding-bottom: 56.25%;">
+                    <iframe class="absolute top-0 left-0 w-full h-full" src="{{ topic.get_embed_url_with_timestamp }}"
+                        frameborder="0" allowfullscreen></iframe>
+                </div>
+
+                {% else %}
+                <div class="p-12 text-center text-gray-400">
+                    <i class="fas fa-exclamation-triangle text-6xl mb-4"></i>
+                    <p>Plataforma de video no soportada</p>
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- Navegación Prev/Next -->
+            <div class="flex gap-4 mb-6">
+                {% if prev_topic %}
+                <a href="{% url 'core:topic_detail' prev_topic.code %}"
+                    class="flex-1 bg-white rounded-xl shadow-lg p-4 hover:shadow-xl transition group border-l-4 border-blue-500">
+                    <div class="text-sm text-gray-500 mb-1">
+                        <i class="fas fa-arrow-left mr-1"></i> Tema Anterior
+                    </div>
+                    <div class="font-bold text-gray-800 group-hover:text-blue-600 transition">
+                        {{ prev_topic.code }} - {{ prev_topic.title|truncatewords:5 }}
+                    </div>
+                </a>
+                {% else %}
+                <div class="flex-1 bg-gray-100 rounded-xl p-4 text-gray-400 text-center">
+                    No hay tema anterior
+                </div>
+                {% endif %}
+
+                {% if next_topic %}
+                <a href="{% url 'core:topic_detail' next_topic.code %}"
+                    class="flex-1 bg-white rounded-xl shadow-lg p-4 hover:shadow-xl transition group border-r-4 border-green-500 text-right">
+                    <div class="text-sm text-gray-500 mb-1">
+                        Siguiente Tema <i class="fas fa-arrow-right ml-1"></i>
+                    </div>
+                    <div class="font-bold text-gray-800 group-hover:text-green-600 transition">
+                        {{ next_topic.code }} - {{ next_topic.title|truncatewords:5 }}
+                    </div>
+                </a>
+                {% else %}
+                <div class="flex-1 bg-gray-100 rounded-xl p-4 text-gray-400 text-center">
+                    ¡Último tema!
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- Descripción del Topic -->
+            <div class="bg-white rounded-xl shadow-lg p-6">
+                <h2 class="text-2xl font-bold text-gray-800 mb-4 flex items-center">
+                    <i class="fas fa-file-alt text-blue-500 mr-2"></i>
+                    Descripción
+                </h2>
+
+                {% if topic.description %}
+                <div class="prose max-w-none text-gray-700 leading-relaxed">
+                    {{ topic.description|linebreaks }}
+                </div>
+                {% else %}
+                <p class="text-gray-500 italic">No hay descripción disponible para este tema.</p>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Sidebar: Tags y Quizzes -->
+        <div class="lg:col-span-1">
+
+            <!-- Tags -->
+            <div class="bg-white rounded-xl shadow-lg p-6 mb-6">
+                <h3 class="text-xl font-bold text-gray-800 mb-4 flex items-center">
+                    <i class="fas fa-tags text-yellow-500 mr-2"></i>
+                    Tags
+                </h3>
+
+                {% if topic.tags.all %}
+                <div class="flex flex-wrap gap-2">
+                    {% for tag in topic.tags.all %}
+                    <span
+                        class="bg-gradient-to-r from-blue-100 to-purple-100 text-blue-800 px-3 py-1 rounded-full text-sm font-semibold border border-blue-200">
+                        #{{ tag.name }}
+                    </span>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <p class="text-gray-500 text-sm">Sin tags asociados</p>
+                {% endif %}
+            </div>
+
+            <!-- Quizzes Relacionados -->
+            {% if quizzes %}
+            <div class="bg-gradient-to-br from-green-500 to-teal-500 text-white rounded-xl shadow-lg p-6 mb-6">
+                <h3 class="text-xl font-bold mb-4 flex items-center">
+                    <i class="fas fa-clipboard-list mr-2"></i>
+                    Evaluaciones Disponibles
+                </h3>
+
+                <div class="space-y-3">
+                    {% for quiz in quizzes %}
+                    <div class="bg-white bg-opacity-20 backdrop-blur rounded-lg p-4 hover:bg-opacity-30 transition">
+                        <div class="font-bold text-lg mb-1">{{ quiz.title }}</div>
+                        <div class="text-sm text-green-100 mb-2">
+                            {{ quiz.description|truncatewords:15 }}
+                        </div>
+                        <div class="text-xs text-green-100 flex items-center gap-4">
+                            <span>
+                                <i class="fas fa-check-circle mr-1"></i>
+                                Puntaje mínimo: {{ quiz.passing_score }}%
+                            </span>
+                            {% if quiz.time_limit_minutes %}
+                            <span>
+                                <i class="fas fa-clock mr-1"></i>
+                                {{ quiz.time_limit_minutes }} min
+                            </span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Info del Video -->
+            <div class="bg-white rounded-xl shadow-lg p-6">
+                <h3 class="text-xl font-bold text-gray-800 mb-4 flex items-center">
+                    <i class="fas fa-info-circle text-blue-500 mr-2"></i>
+                    Información del Video
+                </h3>
+
+                <div class="space-y-3 text-sm">
+                    <div>
+                        <span class="text-gray-500">Plataforma:</span>
+                        <span class="font-semibold text-gray-800 ml-2">
+                            {{ topic.video.get_platform_display }}
+                        </span>
+                    </div>
+
+                    {% if topic.video.duration_seconds %}
+                    <div>
+                        <span class="text-gray-500">Duración Total:</span>
+                        <span class="font-semibold text-gray-800 ml-2">
+                            {% with hours=topic.video.duration_seconds|divisibleby:3600 %}
+                            {% endwith %}
+                            {{ topic.video.duration_seconds|floatformat:0|default:0|add:0|divisibleby:60 }} minutos
+                        </span>
+                    </div>
+                    {% endif %}
+
+                    <a href="{{ topic.get_video_url_with_timestamp }}" target="_blank"
+                        class="block w-full bg-blue-600 text-white text-center px-4 py-2 rounded-lg hover:bg-blue-700 transition mt-4">
+                        <i class="fas fa-external-link-alt mr-2"></i>
+                        Abrir en {{ topic.video.get_platform_display }}
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
